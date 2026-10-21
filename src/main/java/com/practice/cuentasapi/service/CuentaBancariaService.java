@@ -3,8 +3,10 @@ package com.practice.cuentasapi.service;
 import com.practice.cuentasapi.dto.ActualizarTitularRequest;
 import com.practice.cuentasapi.dto.CuentaRequest;
 import com.practice.cuentasapi.dto.CuentaResponse;
+import com.practice.cuentasapi.dto.DepositoRequest;
 import com.practice.cuentasapi.entity.CuentaBancaria;
 import com.practice.cuentasapi.repository.CuentaBancariaRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -31,8 +33,7 @@ public class CuentaBancariaService {
     }
 
     public CuentaResponse getCuentaBancaria (Long id){
-        return toResponse(cuentaBancariaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cuenta bancaria no encontrada")));
+        return toResponse(encontrarCuentaBancariaPorId(id));
     }
 
     public List<CuentaResponse> getCuentasBancarias () {
@@ -43,10 +44,30 @@ public class CuentaBancariaService {
     }
 
     public CuentaResponse actualizarTituloCuentaBancaria (ActualizarTitularRequest cuenta, Long id){
-        CuentaBancaria cuentaParaActualizar = cuentaBancariaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cuenta bancaria no encontrada"));
+        CuentaBancaria cuentaParaActualizar = encontrarCuentaBancariaPorId(id);
         cuentaParaActualizar.setTitular(cuenta.titular());
         return toResponse(cuentaBancariaRepository.save(cuentaParaActualizar));
+    }
+
+    @Transactional
+    public CuentaResponse deposito (DepositoRequest depositoRequest, Long id){
+        CuentaBancaria cuentaDeposito = encontrarCuentaBancariaPorId(id);
+        if(!cuentaDeposito.isActiva()){
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se pueden realizar depósitos en una cuenta inactiva"
+            );
+        }
+        cuentaDeposito.setSaldo(cuentaDeposito.getSaldo().add(depositoRequest.cantidadDepositada()));
+        return toResponse(cuentaBancariaRepository.save(cuentaDeposito));
+    }
+
+    private CuentaBancaria encontrarCuentaBancariaPorId(Long id){
+        return cuentaBancariaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Cuenta bancaria no encontrada"
+                ));
     }
 
     private CuentaResponse toResponse (CuentaBancaria cuentaBancaria){

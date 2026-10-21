@@ -3,6 +3,7 @@ package com.practice.cuentasapi.controller;
 import com.practice.cuentasapi.dto.ActualizarTitularRequest;
 import com.practice.cuentasapi.dto.CuentaRequest;
 import com.practice.cuentasapi.dto.CuentaResponse;
+import com.practice.cuentasapi.dto.DepositoRequest;
 import com.practice.cuentasapi.service.CuentaBancariaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,11 @@ public class CuentaBancariaController {
     @PutMapping (path = "/{id}")
     public ResponseEntity<CuentaResponse> updateCuenta (@Valid @RequestBody ActualizarTitularRequest cuenta, @PathVariable Long id){
         return ResponseEntity.ok(cuentaBancariaService.actualizarTituloCuentaBancaria(cuenta, id));
+    }
+
+    @PostMapping (path = "/{id}/depositos")
+    public ResponseEntity<CuentaResponse> depositar (@Valid @RequestBody DepositoRequest depositoRequest, @PathVariable Long id) {
+        return ResponseEntity.ok(cuentaBancariaService.deposito(depositoRequest, id));
     }
 
 }
